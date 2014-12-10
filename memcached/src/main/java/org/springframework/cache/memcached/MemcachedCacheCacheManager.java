@@ -7,8 +7,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.transaction.AbstractTransactionSupportingCacheManager;
 import org.springframework.util.Assert;
 
-public class MemcachedCacheCacheManager extends
-		AbstractTransactionSupportingCacheManager {
+public class MemcachedCacheCacheManager extends AbstractTransactionSupportingCacheManager {
 
 	private CacheManager cacheManager;
 
@@ -17,27 +16,30 @@ public class MemcachedCacheCacheManager extends
 	}
 
 	public CacheManager getCacheManager() {
-		return this.cacheManager;
+		return cacheManager;
 	}
 
 
 	protected Collection<? extends Cache> loadCaches() {
 
-		Assert.notNull(this.cacheManager, "A backing Memcached CacheManager is required");
-		Collection<Cache> caches = new LinkedHashSet<Cache>();
-		for (MemCache memcache : cacheManager.getCaches()) {
-			caches.add(new MemCachedCache(memcache));
+		Assert.notNull(cacheManager, "A backing Memcached CacheManager is required");
+		 String[] names = cacheManager.getCacheNames();
+		Collection<Cache> caches = new LinkedHashSet<Cache>(names.length);
+		 for (String name : names) {
+			caches.add(new MemCachedCache(cacheManager.getMemCache(name)));
 		}
+
+
 		return caches;
 	}
 
 	public Cache getCache(String name) {
 		Cache cache = super.getCache(name);
 		if (cache == null) {
-			MemCache memcache = cacheManager.getCache(name);
+			MemCache memcache = cacheManager.getMemCache(name);
 			if (memcache != null) {
-				cache = new MemCachedCache(memcache);
 				addCache(cache);
+			    cache = super.getCache(name);
 			}
 		}
 		return cache;

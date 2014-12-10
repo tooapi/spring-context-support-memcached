@@ -8,8 +8,13 @@ import net.rubyeye.xmemcached.exception.MemcachedException;
 
 public class MemCache {
 
+	public static final String split = "_";
+
 	private final String name;
 	private final int expire;
+
+	private Status status;
+
 	private final MemcachedClient memcachedClient;
 
 	public MemCache(String name, int expire, MemcachedClient memcachedClient) {
@@ -20,7 +25,7 @@ public class MemCache {
 	}
 
 	private String getKey(String key) {
-		return name + "_" + key;
+		return name + split + key;
 	}
 
 	public void clear() {
@@ -100,7 +105,6 @@ public class MemCache {
 			final String keys = this.getKey(key.toString());
 			return memcachedClient.withNamespace(name,
 					new MemcachedClientCallable<Object>() {
-
 						public Object call(MemcachedClient client)
 								throws MemcachedException,
 								InterruptedException, TimeoutException {
@@ -115,6 +119,18 @@ public class MemCache {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public void setStatus(Status status) {
+		this.status = status;
+	}
+
+	public enum Status {
+		uninitialised, alive, shudown;
 	}
 
 }
