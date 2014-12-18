@@ -1,5 +1,9 @@
 package org.springframework.cache.memcached;
 
+/**
+ * @author Administrator
+ *
+ */
 public class CacheException extends RuntimeException {
 	private static final long serialVersionUID = 142468800110101833L;
 

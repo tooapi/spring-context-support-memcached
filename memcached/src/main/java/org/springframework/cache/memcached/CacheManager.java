@@ -18,15 +18,15 @@ public class CacheManager {
 
 	private ConcurrentMap<String, MemCache> memecaches = new ConcurrentHashMap<String, MemCache>();
 
-	public CacheManager(MemcachedClient memcachedClient) {
+	public CacheManager(Configuration configuration) {
 		super();
-		this.memcachedClient = memcachedClient;
+		init(configuration);
 	}
 
-	public CacheManager(Configuration configLocation, MemcachedClient memcachedClient) {
+	public CacheManager(Configuration configuration, MemcachedClient memcachedClient) {
 		super();
 		this.memcachedClient = memcachedClient;
-		init(configLocation);
+		init(configuration);
 	}
 
 	private void init(Configuration configLocation) {
@@ -34,13 +34,10 @@ public class CacheManager {
 		init(configLocation, null, null, null);
 	}
 
-	protected synchronized void init(Configuration initialConfiguration,
-			String configurationFileName, URL configurationURL,
-			InputStream configurationInputStream) {
+	protected synchronized void init(Configuration initialConfiguration,String configurationFileName, URL configurationURL,InputStream configurationInputStream) {
 		Configuration configuration;
 		if (initialConfiguration == null)
-			configuration = parse(configurationFileName, configurationURL,
-					configurationInputStream);
+			configuration = parse(configurationFileName, configurationURL,configurationInputStream);
 		else {
 			configuration = initialConfiguration;
 		}

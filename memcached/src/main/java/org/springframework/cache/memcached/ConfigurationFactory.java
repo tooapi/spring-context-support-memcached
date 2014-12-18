@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 
 public final class ConfigurationFactory {
@@ -25,8 +26,7 @@ public final class ConfigurationFactory {
 	public static Configuration parse(File file) {
 
 		if (file == null) {
-			throw new CacheException(
-					"Attempt to configure memcached from null file.");
+			throw new CacheException("Attempt to configure memcached from null file.");
 		}
 		Configuration configuration = null;
 		InputStream input = null;
@@ -39,8 +39,7 @@ public final class ConfigurationFactory {
 				if (input != null)
 					input.close();
 			} catch (IOException e) {
-				logger.error("IOException while closing configuration input stream. Error was "
-						+ e.getMessage());
+				logger.error("IOException while closing configuration input stream. Error was "+ e.getMessage());
 			}
 		}
 
@@ -55,6 +54,31 @@ public final class ConfigurationFactory {
 		try {
 
 			Document document = new SAXReader().read(input);
+			
+			Node configNode = document.selectSingleNode("/memcached/config");
+			
+			if(configNode!=null)
+			{
+				Node poolSize=configNode.selectSingleNode("connectionPoolSize");
+				if(poolSize!=null){
+				  String connectionPoolSize=poolSize.getText();
+				 if(connectionPoolSize!=null&&(connectionPoolSize.equals("")==false)){
+				  configuration.setConnectionPoolSize(Integer.valueOf(connectionPoolSize));
+				 }
+				}
+				
+				Node mode=configNode.selectSingleNode("failureMode");
+				if(mode!=null){
+				  String failureMode=mode.getText();
+				  if(failureMode!=null&&(failureMode.equals("")==false)){
+				    configuration.setFailureMode(Boolean.valueOf(failureMode));
+					
+				  }
+				}
+
+				
+			}
+
 			List nodeList = document.selectNodes("/memcached/cache");
 			Iterator<Element> iterator = nodeList.iterator();
 			while (iterator.hasNext()) {
@@ -67,8 +91,26 @@ public final class ConfigurationFactory {
 				cacheConfig.setTimeToLiveSeconds(Integer.valueOf(timeToLiveSeconds));
 				}
 
-				configuration.getCacheConfigurations().put(
-						cacheConfig.getName(), cacheConfig);
+				configuration.getCacheConfigurations().put(cacheConfig.getName(), cacheConfig);
+			}
+			
+			List serverList = document.selectNodes("/memcached/server/host");
+			Iterator<Element> iter = serverList.iterator();
+			while (iter.hasNext()) {
+				Element element = iter.next();
+				HostConfiguration hostConfig = new HostConfiguration();
+				String address = element.attributeValue("address");
+				hostConfig.setAddress(address);
+				String port = element.attributeValue("port");
+				if (port != null) {
+					hostConfig.setPort(Integer.valueOf(port));
+				}
+				String weight = element.attributeValue("weight");
+				if (weight != null) {
+					hostConfig.setWeight(Integer.valueOf(weight));
+				}
+
+				configuration.getHostConfigurations().add(hostConfig);
 			}
 
 		} catch (Exception e) {
@@ -78,8 +120,7 @@ public final class ConfigurationFactory {
 	}
 
 	public static Configuration parse() throws CacheException {
-		ClassLoader standardClassloader = ClassLoaderUtil
-				.getStandardClassLoader();
+		ClassLoader standardClassloader = ClassLoaderUtil.getStandardClassLoader();
 		URL url = null;
 		if (standardClassloader != null) {
 			url = standardClassloader.getResource(DEFAULT_CLASSPATH_CONFIGURATION_FILE);
